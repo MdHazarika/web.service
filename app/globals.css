@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #0d9488;
+  --accent: #8b5cf6;
+  --radius: 0.75rem;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+@layer components {
+  .text-accent,
+  .text-accent-foreground {
+    color: var(--accent);
+  }
+  .bg-accent {
+    background-color: var(--accent);
+  }
+  .border-accent {
+    border-color: var(--accent);
+  }
+  .text-primary {
+    color: var(--primary);
+  }
+  .bg-primary {
+    background-color: var(--primary);
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+    overflow-wrap: break-word;
+  }
+}
+
+@keyframes flap-left {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(-55deg); }
+}
+
+@keyframes flap-right {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(55deg); }
+}
+
+@keyframes flap-fly {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(70deg); }
+}
