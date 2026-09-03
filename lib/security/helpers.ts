@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
 const ALLOWED_ORIGINS = ["http://localhost:3000", "https://infomythweb.com"];
 
+export function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return true;
+  // Allow any localhost or 127.0.0.1 port for development
+  if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) return true;
+  return ALLOWED_ORIGINS.some((o) => origin === o);
+}
+
 export function getClientIp(req: NextRequest | Request): string {
   const headers = "headers" in req ? req.headers : undefined;
   const forwarded = headers?.get("x-forwarded-for");
@@ -12,11 +19,6 @@ export function getClientIp(req: NextRequest | Request): string {
   const realIp = headers?.get("x-real-ip");
   if (realIp) return realIp;
   return "unknown";
-}
-
-export function isAllowedOrigin(origin: string | null): boolean {
-  if (!origin) return true;
-  return ALLOWED_ORIGINS.some((o) => origin === o);
 }
 
 export function getOrigin(req: Request): string | null {

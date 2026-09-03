@@ -3,6 +3,7 @@ const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig = {
   poweredByHeader: false,
+  allowedDevOrigins: ['127.0.0.1'],
   async headers() {
     return [
       {

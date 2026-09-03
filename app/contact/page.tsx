@@ -94,6 +94,7 @@ function ContactContent() {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const valid = allPlans.find((p) => p.id === queryPlan)?.id;
@@ -120,17 +121,32 @@ function ContactContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    console.log("Form submission started", form);
+    if (!validate()) {
+      console.log("Validation failed", errors);
+      return;
+    }
     setStatus("submitting");
+    setSubmitError(null);
     try {
+      console.log("Sending to API", form);
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (res.ok) setStatus("success");
-      else setStatus("idle");
-    } catch {
+      console.log("API response status", res.status);
+      const data = await res.json();
+      console.log("API response data", data);
+      if (res.ok) {
+        setStatus("success");
+      } else {
+        setSubmitError(data.message || "Failed to submit. Please try again.");
+        setStatus("idle");
+      }
+    } catch (err) {
+      console.error("Submission error", err);
+      setSubmitError("Network error. Please check your connection and try again.");
       setStatus("idle");
     }
   };
@@ -347,6 +363,9 @@ function ContactContent() {
             >
               {status === "submitting" ? "Sending..." : "Send inquiry"}
             </button>
+            {submitError && (
+              <p className="text-sm text-red-400">{submitError}</p>
+            )}
           </form>
         </motion.div>
 
