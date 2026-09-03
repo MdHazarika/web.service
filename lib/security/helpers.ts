@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
-const ALLOWED_ORIGINS = ["http://localhost:3000", "https://infomythweb.com"];
+const ALLOWED_ORIGINS = ["http://localhost:3000", "https://infomythweb.com", "https://infomythwebservice.in", "http://infomythwebservice.in"];
 
 export function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return true;
