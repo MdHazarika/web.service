@@ -89,7 +89,7 @@ export const defaultConfig: SiteConfig = {
     trust: true,
     techStack: true,
     industries: true,
-    whyChooseUs: true,
+    whyChooseUs: false,
     faq: true,
     planComparison: true,
     timeline: true,
