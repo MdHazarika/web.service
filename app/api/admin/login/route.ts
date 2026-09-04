@@ -19,15 +19,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
   }
 
-  const session = await getAdminSession();
-  const admin = await loginAdmin(email, password);
+  try {
+    const session = await getAdminSession();
+    const admin = await loginAdmin(email, password);
 
-  if (!admin) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    if (!admin) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    session.admin = { id: admin.id, email: admin.email };
+    await session.save();
+
+    return NextResponse.json({ success: true, admin: { id: admin.id, email: admin.email } });
+  } catch (error) {
+    console.error("Login error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  session.admin = { id: admin.id, email: admin.email };
-  await session.save();
-
-  return NextResponse.json({ success: true, admin: { id: admin.id, email: admin.email } });
 }

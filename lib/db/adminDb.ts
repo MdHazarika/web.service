@@ -24,57 +24,62 @@ let db: ReturnType<typeof createClient> | DatabaseSync | null = null;
 async function getDb() {
   if (db) return db;
 
-  if (useTurso) {
-    // For production, use Turso
-    db = createClient({ url: tursoUrl!, authToken: tursoAuthToken! });
-    
-    // Initialize tables
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS admin_users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-      CREATE TABLE IF NOT EXISTS site_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT UNIQUE NOT NULL,
-        value TEXT NOT NULL,
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-    `);
-  } else {
-    // For development or when Turso is not configured, use local SQLite
-    const DATA_DIR = join(process.cwd(), "data");
-    if (!existsSync(DATA_DIR)) {
-      mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (useTurso) {
+      // For production, use Turso
+      db = createClient({ url: tursoUrl!, authToken: tursoAuthToken! });
+      
+      // Initialize tables
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS admin_users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS site_config (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          key TEXT UNIQUE NOT NULL,
+          value TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+    } else {
+      // For development or when Turso is not configured, use local SQLite
+      const DATA_DIR = join(process.cwd(), "data");
+      if (!existsSync(DATA_DIR)) {
+        mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const DB_PATH = join(DATA_DIR, "admin.db");
+      db = new DatabaseSync(DB_PATH);
+      
+      // Initialize tables
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS admin_users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS site_config (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          key TEXT UNIQUE NOT NULL,
+          value TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
     }
-    const DB_PATH = join(DATA_DIR, "admin.db");
-    db = new DatabaseSync(DB_PATH);
-    
-    // Initialize tables
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS admin_users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-      CREATE TABLE IF NOT EXISTS site_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT UNIQUE NOT NULL,
-        value TEXT NOT NULL,
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-    `);
+
+    await seedDefaultAdmin();
+    await seedDefaultConfig();
+
+    return db;
+  } catch (error) {
+    console.error("Database initialization error:", error);
+    throw error;
   }
-
-  await seedDefaultAdmin();
-  await seedDefaultConfig();
-
-  return db;
 }
 
 export async function seedDefaultAdmin() {
