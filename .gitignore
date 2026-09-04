@@ -31,7 +31,6 @@ yarn-error.log*
 # runtime data
 data/admin.db
 data/freeConsultations.json
-data/siteConfig.json
 site-dev.log
 *.log
 
