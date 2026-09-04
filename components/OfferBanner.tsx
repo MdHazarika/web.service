@@ -16,7 +16,7 @@ export function OfferBanner() {
 
   return (
     <div
-      className="sticky top-0 z-50 w-full py-2.5 text-center text-sm font-medium"
+      className="w-full py-2.5 text-center text-sm font-medium"
       style={{ backgroundColor: displayOffers.bgColor, color: displayOffers.textColor }}
     >
       <Link href={displayOffers.link || "/contact"} className="inline-block hover:underline">
