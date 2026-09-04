@@ -29,7 +29,7 @@ async function getDb() {
       // For production, use Turso
       db = createClient({ url: tursoUrl!, authToken: tursoAuthToken! });
       
-      // Initialize tables
+      // Initialize tables - separate calls for Turso
       await db.execute(`
         CREATE TABLE IF NOT EXISTS admin_users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,13 +37,15 @@ async function getDb() {
           password_hash TEXT NOT NULL,
           created_at TEXT NOT NULL DEFAULT (datetime('now')),
           updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
+        )
+      `);
+      await db.execute(`
         CREATE TABLE IF NOT EXISTS site_config (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           key TEXT UNIQUE NOT NULL,
           value TEXT NOT NULL,
           updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
+        )
       `);
     } else {
       // For development or when Turso is not configured, use local SQLite
