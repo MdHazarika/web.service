@@ -14,7 +14,7 @@ export async function loginAdmin(
   email: string,
   password: string
 ): Promise<{ id: number; email: string } | null> {
-  const user = verifyAdminPassword(email, password);
+  const user = await verifyAdminPassword(email, password);
   if (!user) return null;
   return { id: user.id, email: user.email };
 }

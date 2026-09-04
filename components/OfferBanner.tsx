@@ -14,7 +14,7 @@ export function OfferBanner() {
       className="w-full py-2.5 text-center text-sm font-medium"
       style={{ backgroundColor: offers.bgColor, color: offers.textColor }}
     >
-      <Link href={offers.link} className="inline-block hover:underline">
+      <Link href={offers.link || "/contact"} className="inline-block hover:underline">
         {offers.message}
       </Link>
     </div>

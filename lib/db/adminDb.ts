@@ -1,6 +1,4 @@
-import { DatabaseSync, type StatementSync } from "node:sqlite";
-import { join } from "path";
-import { existsSync, mkdirSync } from "fs";
+import { createClient } from "@libsql/client";
 import { compareSync, hashSync } from "bcryptjs";
 import { defaultConfig, SiteConfig } from "@/lib/siteConfig";
 
@@ -12,15 +10,30 @@ export interface AdminUser {
   updatedAt: string;
 }
 
-const DATA_DIR = join(process.cwd(), "data");
-const DB_PATH = join(DATA_DIR, "admin.db");
+const tursoUrl = process.env.TURSO_DATABASE_URL;
+const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
 
-function ensureDb() {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
+// Use local SQLite for development, Turso for production
+const isLocal = !tursoUrl || process.env.NODE_ENV === "development";
+
+let db: ReturnType<typeof createClient> | null = null;
+
+async function getDb() {
+  if (db) return db;
+
+  if (isLocal) {
+    // For local development, use in-memory SQLite
+    db = createClient({ url: "file:local.db" });
+  } else {
+    // For production, use Turso
+    if (!tursoUrl || !tursoAuthToken) {
+      throw new Error("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN environment variables are required in production");
+    }
+    db = createClient({ url: tursoUrl, authToken: tursoAuthToken });
   }
-  const db = new DatabaseSync(DB_PATH);
-  db.exec(`
+
+  // Initialize tables
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS admin_users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
@@ -35,23 +48,17 @@ function ensureDb() {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
-  dbInstance = db;
-  seedDefaultAdmin();
-  seedDefaultConfig();
+
+  await seedDefaultAdmin();
+  await seedDefaultConfig();
+
   return db;
 }
 
-let dbInstance: DatabaseSync | null = null;
-
-export function getAdminDb(): DatabaseSync {
-  if (!dbInstance) dbInstance = ensureDb();
-  return dbInstance;
-}
-
-export function seedDefaultAdmin() {
-  const db = getAdminDb();
-  const existing = db.prepare("SELECT id FROM admin_users LIMIT 1").get() as { id: number } | undefined;
-  if (existing) return;
+export async function seedDefaultAdmin() {
+  const db = await getDb();
+  const result = await db.execute("SELECT id FROM admin_users LIMIT 1");
+  if (result.rows.length > 0) return;
 
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
@@ -61,46 +68,43 @@ export function seedDefaultAdmin() {
   }
 
   const passwordHash = hashSync(password, 12);
-  const insert = db.prepare("INSERT INTO admin_users (email, password_hash) VALUES (?, ?)");
-  insert.run(email, passwordHash);
+  await db.execute("INSERT INTO admin_users (email, password_hash) VALUES (?, ?)", [email, passwordHash]);
 }
 
-export function getAdminByEmail(email: string): AdminUser | undefined {
-  const db = getAdminDb();
-  const stmt = db.prepare("SELECT id, email, password_hash as passwordHash, created_at as createdAt, updated_at as updatedAt FROM admin_users WHERE email = ?");
-  return stmt.get(email) as AdminUser | undefined;
+export async function getAdminByEmail(email: string): Promise<AdminUser | undefined> {
+  const db = await getDb();
+  const result = await db.execute("SELECT id, email, password_hash as passwordHash, created_at as createdAt, updated_at as updatedAt FROM admin_users WHERE email = ?", [email]);
+  return result.rows[0] as unknown as AdminUser | undefined;
 }
 
-export function verifyAdminPassword(email: string, password: string): AdminUser | null {
-  const user = getAdminByEmail(email);
+export async function verifyAdminPassword(email: string, password: string): Promise<AdminUser | null> {
+  const user = await getAdminByEmail(email);
   if (!user) return null;
   if (!compareSync(password, user.passwordHash)) return null;
   return user;
 }
 
-export function updateAdminPassword(userId: number, newPassword: string): void {
-  const db = getAdminDb();
+export async function updateAdminPassword(userId: number, newPassword: string): Promise<void> {
+  const db = await getDb();
   const passwordHash = hashSync(newPassword, 12);
-  const stmt = db.prepare("UPDATE admin_users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?");
-  stmt.run(passwordHash, userId);
+  await db.execute("UPDATE admin_users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?", [passwordHash, userId]);
 }
 
-export function seedDefaultConfig() {
-  const db = getAdminDb();
-  const existing = db.prepare("SELECT id FROM site_config LIMIT 1").get() as { id: number } | undefined;
-  if (existing) return;
+export async function seedDefaultConfig() {
+  const db = await getDb();
+  const result = await db.execute("SELECT id FROM site_config LIMIT 1");
+  if (result.rows.length > 0) return;
 
   const configJson = JSON.stringify(defaultConfig);
-  const insert = db.prepare("INSERT INTO site_config (key, value) VALUES (?, ?)");
-  insert.run("site_config", configJson);
+  await db.execute("INSERT INTO site_config (key, value) VALUES (?, ?)", ["site_config", configJson]);
 }
 
-export function getSiteConfig(): SiteConfig {
-  const db = getAdminDb();
-  const row = db.prepare("SELECT value FROM site_config WHERE key = ?").get("site_config") as { value: string } | undefined;
-  if (!row) return defaultConfig;
+export async function getSiteConfig(): Promise<SiteConfig> {
+  const db = await getDb();
+  const result = await db.execute("SELECT value FROM site_config WHERE key = ?", ["site_config"]);
+  if (result.rows.length === 0) return defaultConfig;
   try {
-    const saved = JSON.parse(row.value) as Partial<SiteConfig>;
+    const saved = JSON.parse(result.rows[0].value as string) as Partial<SiteConfig>;
     return {
       ...defaultConfig,
       ...saved,
@@ -111,13 +115,11 @@ export function getSiteConfig(): SiteConfig {
   }
 }
 
-export function saveSiteConfig(config: SiteConfig): void {
-  const db = getAdminDb();
+export async function saveSiteConfig(config: SiteConfig): Promise<void> {
+  const db = await getDb();
   const configJson = JSON.stringify(config);
-  const update = db.prepare("UPDATE site_config SET value = ?, updated_at = datetime('now') WHERE key = ?");
-  const result = update.run(configJson, "site_config");
-  if (result.changes === 0) {
-    const insert = db.prepare("INSERT INTO site_config (key, value) VALUES (?, ?)");
-    insert.run("site_config", configJson);
+  const result = await db.execute("UPDATE site_config SET value = ?, updated_at = datetime('now') WHERE key = ?", [configJson, "site_config"]);
+  if (result.rowsAffected === 0) {
+    await db.execute("INSERT INTO site_config (key, value) VALUES (?, ?)", ["site_config", configJson]);
   }
 }

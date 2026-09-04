@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     return tooManyRequests(limit.retryAfter);
   }
 
-  const config = getSiteConfig();
+  const config = await getSiteConfig();
   return NextResponse.json(config);
 }
 
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const merged = { ...defaultConfig, ...body };
-    saveSiteConfig(merged);
+    await saveSiteConfig(merged);
     return NextResponse.json(merged);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
