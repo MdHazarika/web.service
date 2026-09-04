@@ -5,7 +5,7 @@ import { Check, X } from "lucide-react";
 import { Reveal } from "./Reveal";
 
 const others = ["Templates", "Slow load times", "Poor SEO", "Limited support", "Hidden fees"];
-const ours = ["Fully custom", "Fast performance", "SEO optimized", "AI powered", "Dedicated support"];
+const ours = ["Fully custom", "Fast performance", "SEO optimized", "Dedicated support"];
 
 export function WhyChooseUs() {
   return (
