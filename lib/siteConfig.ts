@@ -109,7 +109,7 @@ export const defaultConfig: SiteConfig = {
     websiteBuilder: true,
     liveWebsiteBuilder: true,
     roi: true,
-    bookConsultation: true,
+    bookConsultation: false,
     team: false,
     newsletter: true,
   },
