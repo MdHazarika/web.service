@@ -39,9 +39,9 @@ export interface SiteConfig {
 
 export const defaultConfig: SiteConfig = {
   offers: {
-    active: false,
-    message: "",
-    link: "/contact",
+    active: true,
+    message: "40% off on all website plans for limited time!",
+    link: "/#plans",
     bgColor: "#0d9488",
     textColor: "#ffffff",
   },
