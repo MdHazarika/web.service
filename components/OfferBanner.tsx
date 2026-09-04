@@ -2,20 +2,25 @@
 
 import Link from "next/link";
 import { useSiteConfig } from "./ConfigProvider";
+import { defaultConfig } from "@/lib/siteConfig";
 
 export function OfferBanner() {
-  const { config } = useSiteConfig();
+  const { config, loading } = useSiteConfig();
   const { offers } = config;
 
-  if (!offers.active || !offers.message) return null;
+  // During loading, use default config to prevent flicker
+  // After loading, use the actual config from database
+  const displayOffers = loading ? defaultConfig.offers : offers;
+
+  if (!displayOffers.active || !displayOffers.message) return null;
 
   return (
     <div
-      className="w-full py-2.5 text-center text-sm font-medium"
-      style={{ backgroundColor: offers.bgColor, color: offers.textColor }}
+      className="sticky top-0 z-50 w-full py-2.5 text-center text-sm font-medium"
+      style={{ backgroundColor: displayOffers.bgColor, color: displayOffers.textColor }}
     >
-      <Link href={offers.link || "/contact"} className="inline-block hover:underline">
-        {offers.message}
+      <Link href={displayOffers.link || "/contact"} className="inline-block hover:underline">
+        {displayOffers.message}
       </Link>
     </div>
   );
