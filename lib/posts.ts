@@ -41,7 +41,7 @@ Want to know how fast your site could be? Book a free performance audit with our
       "Great design is not just visual — it is strategic. Learn the principles behind high-converting pages.",
     category: "Design",
     author: "InfoMyth Web Service Team",
-    date: "2024-07-22",
+    date: "2025-07-22",
     readTime: "5 min read",
     content: `
 A beautiful website is table stakes. A website that converts is what moves the needle for your business.
@@ -63,7 +63,7 @@ Conversion-focused design is a mix of psychology and craft. When done right, you
       "Notion, Sanity, WordPress, or a custom dashboard? Here is how we help clients pick the right stack.",
     category: "Strategy",
     author: "InfoMyth Web Service Team",
-    date: "2024-06-10",
+    date: "2025-06-10",
     readTime: "6 min read",
     content: `
 The right CMS depends on who will manage content, how often it changes, and what integrations you need.
@@ -83,7 +83,7 @@ We always start with your team's workflow before recommending a platform. The be
       "From dynamic personalization to AI-assisted support, see how we are using AI to build smarter websites.",
     category: "Technology",
     author: "InfoMyth Web Service Team",
-    date: "2024-05-28",
+    date: "2026-05-28",
     readTime: "4 min read",
     content: `
 Artificial intelligence is changing how websites are built and experienced. We are integrating AI in practical ways:
