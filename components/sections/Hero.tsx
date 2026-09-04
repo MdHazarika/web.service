@@ -212,12 +212,6 @@ export function Hero() {
             <a href="#plans" className={cn(buttonVariants({ size: "lg" }))}>
               View Plans <ArrowRight size={18} className="ml-2" />
             </a>
-            <Link
-              href="/work"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-            >
-              See Our Work
-            </Link>
           </div>
         </motion.div>
 
